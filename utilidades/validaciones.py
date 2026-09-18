@@ -42,3 +42,13 @@ def validar_periodos(n):
         raise ValueError("El número de períodos debe ser mayor que cero.")
 
     return True
+
+def validar_gradiente(G):
+    """
+    Valida el incremento o decremento del gradiente aritmético.
+    Puede ser positivo, negativo o cero.
+    """
+    if not isinstance(G, (int, float)):
+        raise ValueError("El gradiente debe ser un número.")
+
+    return True
