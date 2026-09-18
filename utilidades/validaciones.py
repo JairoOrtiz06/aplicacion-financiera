@@ -34,10 +34,11 @@ def validar_periodos(n):
     """
     Valida que el número de períodos sea un entero mayor que cero.
     """
-    if n <= 0:
-        raise ValueError("El número de períodos debe ser mayor que cero.")
-    
+
     if not isinstance(n, int):
         raise ValueError("El número de períodos debe ser un entero.")
-    
+
+    if n <= 0:
+        raise ValueError("El número de períodos debe ser mayor que cero.")
+
     return True
