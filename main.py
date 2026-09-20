@@ -1,13 +1,28 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from modulos.interes_simple import calcular_interes_simple
+from modulos.interes_simple import (
+    calcular_interes_simple,
+    calcular_monto_desde_interes,
+    calcular_monto,
+    calcular_valor_presente,
+    calcular_tasa,
+    calcular_tiempo,
+    calcular_descuento_simple,
+    calcular_valor_actual,
+    calcular_tasa_descuento,
+)
 from modulos.interes_compuesto import calcular_futuro
 from modulos.gradiente_aritmetico import calcular_presente_gradiente
-from modulos.gradiente_geometrico import calcular_gradiente_geometrico
-from interfaz.interes_compuesto_ui import mostrar_interes_compuesto_ui
+from modulos.gradiente_geometrico import (
+    calcular_gradiente_geometrico,
+    calcular_presente_gradiente_geometrico,
+    calcular_presente_gradiente_geometrico_igual,
+    calcular_futuro_gradiente_geometrico,
+    calcular_futuro_gradiente_geometrico_igual,
+)
 from interfaz.interes_compuesto_ui import mostrar_interes_compuesto_ui
 
 from graficas.lineas_tiempo import (
@@ -1080,58 +1095,234 @@ def botones_formulario(color, calcular):
 
 def mostrar_interes_simple():
     actualizar_navegacion("Interés simple")
-    entradas = crear_formulario(
+    limpiar()
+    titulo_pagina(
         "Interés Simple",
-        "Cálculo del interés generado y del valor futuro.",
-        VERDE_CLARO,
-        [
-            ("capital", "Capital"),
-            ("tasa", "Tasa de interés (%)"),
-            ("periodos", "Número de períodos")
-        ]
+        "Seleccione una fórmula y complete las variables de la operación."
     )
 
-    resultado = panel_resultado(VERDE_CLARO)
+    operaciones = {
+        "Interés (I = P r t)": {
+            "campos": [("P", "Capital inicial (P)"), ("r", "Tasa por período (%)"), ("t", "Tiempo (t)")],
+            "calcular": lambda v: ("Interés (I)", calcular_interes_simple(v["P"], v["r"], v["t"])[0], v["P"], calcular_interes_simple(v["P"], v["r"], v["t"])[1], v["t"]),
+        },
+        "Monto (F = P + I)": {
+            "campos": [("P", "Capital inicial (P)"), ("I", "Interés ganado (I)"), ("t", "Tiempo (t)")],
+            "calcular": lambda v: ("Monto (F)", calcular_monto_desde_interes(v["P"], v["I"]), v["P"], calcular_monto_desde_interes(v["P"], v["I"]), v["t"]),
+        },
+        "Monto (F = P(1 + r t))": {
+            "campos": [("P", "Capital inicial (P)"), ("r", "Tasa por período (%)"), ("t", "Tiempo (t)")],
+            "calcular": lambda v: ("Monto (F)", calcular_monto(v["P"], v["r"], v["t"]), v["P"], calcular_monto(v["P"], v["r"], v["t"]), v["t"]),
+        },
+        "Valor presente (P = F / (1 + r t))": {
+            "campos": [("F", "Monto total (F)"), ("r", "Tasa por período (%)"), ("t", "Tiempo (t)")],
+            "calcular": lambda v: ("Valor presente (P)", calcular_valor_presente(v["F"], v["r"], v["t"]), calcular_valor_presente(v["F"], v["r"], v["t"]), v["F"], v["t"]),
+        },
+        "Tasa (r = (F - P) / (P t))": {
+            "campos": [("F", "Monto total (F)"), ("P", "Capital inicial (P)"), ("t", "Tiempo (t)")],
+            "calcular": lambda v: ("Tasa por período (r)", calcular_tasa(v["F"], v["P"], v["t"]), v["P"], v["F"], v["t"]),
+        },
+        "Tiempo (t = (F - P) / (P r))": {
+            "campos": [("F", "Monto total (F)"), ("P", "Capital inicial (P)"), ("r", "Tasa por período (%)")],
+            "calcular": lambda v: ("Tiempo (t)", calcular_tiempo(v["F"], v["P"], v["r"]), v["P"], v["F"], calcular_tiempo(v["F"], v["P"], v["r"])),
+        },
+        "Descuento simple (D = F d t)": {
+            "campos": [("F", "Monto nominal (F)"), ("d", "Tasa de descuento (%)"), ("t", "Tiempo (t)")],
+            "calcular": lambda v: ("Descuento (D)", calcular_descuento_simple(v["F"], v["d"], v["t"]), calcular_valor_actual(v["F"], v["d"], v["t"]), v["F"], v["t"]),
+        },
+        "Valor actual (P = F(1 - d t))": {
+            "campos": [("F", "Monto nominal (F)"), ("d", "Tasa de descuento (%)"), ("t", "Tiempo (t)")],
+            "calcular": lambda v: ("Valor actual (P)", calcular_valor_actual(v["F"], v["d"], v["t"]), calcular_valor_actual(v["F"], v["d"], v["t"]), v["F"], v["t"]),
+        },
+        "Tasa de descuento (d = r / (1 + r t))": {
+            "campos": [("r", "Tasa de interés (%)"), ("t", "Tiempo (t)")],
+            "calcular": lambda v: ("Tasa de descuento (d)", calcular_tasa_descuento(v["r"], v["t"]), None, None, None),
+        },
+    }
+
+    descripciones = {
+        "Interés (I = P r t)": "Obtenga el interés generado a partir del capital, la tasa y el tiempo.",
+        "Monto (F = P + I)": "Sume el capital inicial y el interés ganado para encontrar el monto.",
+        "Monto (F = P(1 + r t))": "Calcule directamente el monto acumulado con interés simple.",
+        "Valor presente (P = F / (1 + r t))": "Descuente un monto futuro para encontrar su equivalente actual.",
+        "Tasa (r = (F - P) / (P t))": "Determine la tasa por período conociendo el capital, el monto y el tiempo.",
+        "Tiempo (t = (F - P) / (P r))": "Encuentre cuántos períodos necesita la operación para alcanzar el monto.",
+        "Descuento simple (D = F d t)": "Calcule el descuento aplicado a un monto nominal.",
+        "Valor actual (P = F(1 - d t))": "Obtenga el valor actual usando una tasa de descuento simple.",
+        "Tasa de descuento (d = r / (1 + r t))": "Convierta una tasa de interés simple en su tasa de descuento equivalente.",
+    }
+
+    tarjeta = tk.Frame(contenido, bg=BLANCO, highlightthickness=1, highlightbackground=BORDE)
+    tarjeta.pack(fill="x", padx=42, pady=20)
+    tk.Frame(tarjeta, bg=VERDE_CLARO, height=8).pack(fill="x")
+    cabecera_operacion = tk.Frame(tarjeta, bg=VERDE)
+    cabecera_operacion.pack(fill="x", padx=20, pady=(18, 0))
+    tk.Label(
+        cabecera_operacion,
+        text="INTERÉS SIMPLE",
+        font=("Segoe UI", 9, "bold"),
+        bg=DORADO,
+        fg=BLANCO,
+        padx=10,
+        pady=5,
+    ).pack(side="left", padx=(14, 12), pady=12)
+    tk.Label(
+        cabecera_operacion,
+        text="Laboratorio de fórmulas",
+        font=("Segoe UI", 13, "bold"),
+        bg=VERDE,
+        fg=BLANCO,
+    ).pack(side="left", pady=12)
+    guia_simple = tk.Frame(tarjeta, bg="#F4F8F6")
+    guia_simple.pack(fill="x", padx=30, pady=(16, 4))
+    tk.Label(
+        guia_simple,
+        text="CÓMO ELEGIR LA FÓRMULA",
+        font=("Segoe UI", 8, "bold"),
+        bg="#F4F8F6",
+        fg=VERDE,
+    ).pack(anchor="w", padx=14, pady=(11, 7))
+    pasos_simple = tk.Frame(guia_simple, bg="#F4F8F6")
+    pasos_simple.pack(fill="x", padx=10, pady=(0, 11))
+    for columna, numero, titulo, detalle in (
+        (0, "01", "Identifique la incógnita", "I, F, P, r, t, D o d"),
+        (1, "02", "Elija la ecuación", "La incógnita debe quedar despejada"),
+    ):
+        paso = tk.Frame(pasos_simple, bg=BLANCO, highlightthickness=1, highlightbackground=BORDE)
+        paso.grid(row=0, column=columna, sticky="ew", padx=(0, 8 if columna == 0 else 0))
+        pasos_simple.columnconfigure(columna, weight=1)
+        tk.Label(paso, text=numero, font=("Segoe UI", 8, "bold"), bg=DORADO, fg=BLANCO, padx=7, pady=4).pack(side="left", padx=10, pady=8)
+        texto_paso = tk.Frame(paso, bg=BLANCO)
+        texto_paso.pack(side="left", anchor="w", pady=6)
+        tk.Label(texto_paso, text=titulo, font=("Segoe UI", 9, "bold"), bg=BLANCO, fg=NEGRO).pack(anchor="w")
+        tk.Label(texto_paso, text=detalle, font=("Segoe UI", 8), bg=BLANCO, fg=GRIS).pack(anchor="w")
+    estilo = ttk.Style(tarjeta)
+    estilo.theme_use("clam")
+    estilo.configure(
+        "Simple.TCombobox",
+        fieldbackground=CAMPO,
+        background=CAMPO,
+        foreground=NEGRO,
+        bordercolor=BORDE,
+        lightcolor=BORDE,
+        darkcolor=BORDE,
+        arrowcolor=VERDE_CLARO,
+        padding=10,
+        font=("Segoe UI", 10),
+    )
+    estilo.map(
+        "Simple.TCombobox",
+        fieldbackground=[("readonly", CAMPO)],
+        selectbackground=[("readonly", CAMPO)],
+        selectforeground=[("readonly", NEGRO)],
+        bordercolor=[("focus", VERDE_CLARO)],
+    )
+
+    tk.Label(
+        tarjeta,
+        text="ELIJA EL MODELO QUE DESEA RESOLVER",
+        font=("Segoe UI", 9, "bold"),
+        bg=BLANCO,
+        fg=GRIS,
+    ).pack(anchor="w", padx=30, pady=(22, 4))
+    seleccion = tk.StringVar(value=next(iter(operaciones)))
+    selector = ttk.Combobox(
+        tarjeta,
+        textvariable=seleccion,
+        values=list(operaciones),
+        state="readonly",
+        style="Simple.TCombobox",
+    )
+    selector.pack(fill="x", padx=30, ipady=2)
+    detalle = tk.Frame(tarjeta, bg="#EAF6F2")
+    detalle.pack(fill="x", padx=30, pady=(14, 4))
+    formula_activa = tk.Label(
+        detalle,
+        text="",
+        font=("Segoe UI", 11, "bold"),
+        bg="#EAF6F2",
+        fg=VERDE,
+    )
+    formula_activa.pack(anchor="w", padx=14, pady=(10, 2))
+    tk.Label(
+        detalle,
+        text="SE USA PARA",
+        font=("Segoe UI", 8, "bold"),
+        bg="#EAF6F2",
+        fg=VERDE,
+    ).pack(anchor="w", padx=14, pady=(4, 0))
+    descripcion_activa = tk.Label(
+        detalle,
+        text="",
+        font=("Segoe UI", 9),
+        bg="#EAF6F2",
+        fg=GRIS,
+        justify="left",
+        wraplength=900,
+    )
+    descripcion_activa.pack(anchor="w", padx=14, pady=(0, 10))
+    tk.Label(tarjeta, text="DATOS DE LA OPERACIÓN", font=("Segoe UI", 8, "bold"), bg=BLANCO, fg=GRIS).pack(anchor="w", padx=30)
+    campos_frame = tk.Frame(tarjeta, bg=BLANCO)
+    campos_frame.pack(fill="x", padx=30, pady=12)
+    campos_frame.columnconfigure(0, weight=1)
+    campos_frame.columnconfigure(1, weight=1)
+    entradas = {}
+    resultado = tk.Label(tarjeta, text="Complete los datos y presione CALCULAR.", font=("Segoe UI", 12, "bold"), bg=BLANCO, fg=VERDE_CLARO, justify="left")
+    resultado.pack(anchor="w", padx=30, pady=(4, 22))
+
+    def cargar_campos(_evento=None):
+        for widget in campos_frame.winfo_children():
+            widget.destroy()
+        entradas.clear()
+        formula_activa.config(text=seleccion.get())
+        descripcion_activa.config(text=descripciones[seleccion.get()])
+        for indice, (nombre, etiqueta) in enumerate(operaciones[seleccion.get()]["campos"]):
+            bloque = tk.Frame(campos_frame, bg=BLANCO)
+            columna = indice % 2
+            fila = indice // 2
+            bloque.grid(row=fila, column=columna, sticky="ew", padx=(0 if columna == 0 else 8, 8 if columna == 0 else 0), pady=6)
+            tk.Label(bloque, text=etiqueta, font=("Segoe UI", 10, "bold"), bg=BLANCO, fg=NEGRO).pack(anchor="w", pady=(0, 5))
+            entrada = tk.Entry(bloque, font=("Segoe UI", 11), bg=CAMPO, fg=NEGRO, insertbackground=VERDE, relief="flat", bd=0)
+            entrada.pack(fill="x", padx=12, pady=8)
+            entradas[nombre] = entrada
 
     def calcular():
         try:
-            capital = leer_numero(entradas["capital"])
-            tasa = leer_numero(entradas["tasa"]) / 100
-            periodos = int(entradas["periodos"].get())
-
-            if capital <= 0 or tasa < 0 or periodos <= 0:
+            valores = {}
+            for nombre in entradas:
+                valores[nombre] = leer_numero(entradas[nombre])
+                if nombre in ("r", "d"):
+                    valores[nombre] /= 100
+            if any(valor <= 0 for valor in valores.values()):
                 raise ValueError
+            nombre_resultado, valor, capital, futuro, periodos = operaciones[seleccion.get()]["calcular"](valores)
+            if nombre_resultado == "Tasa por período (r)" or nombre_resultado == "Tasa de descuento (d)":
+                texto = f"{nombre_resultado}: {valor * 100:,.4f}%"
+            else:
+                texto = f"{nombre_resultado}: ${valor:,.2f}"
+            resultado.config(text=texto)
+            if capital is not None and futuro is not None:
+                if float(periodos).is_integer():
+                    mostrar_grafica(
+                        grafica_interes_simple(
+                            capital,
+                            futuro,
+                            int(periodos),
+                        )
+                    )
+                else:
+                    resultado.config(
+                        text=(
+                            f"{texto}\n"
+                            "La línea de tiempo requiere períodos enteros."
+                        )
+                    )
+        except (ValueError, ZeroDivisionError):
+            messagebox.showerror("Datos inválidos", "Ingrese valores positivos y numéricos válidos.")
 
-            interes, futuro = calcular_interes_simple(
-                capital,
-                tasa,
-                periodos
-            )
-
-            resultado.config(
-                text=(
-                    f"Interés generado: ${interes:,.2f}\n"
-                    f"Valor futuro: ${futuro:,.2f}"
-                )
-            )
-
-            fig = grafica_interes_simple(
-                capital,
-                futuro,
-                periodos
-            )
-            mostrar_grafica(fig)
-
-        except ValueError:
-            messagebox.showerror(
-                "Datos inválidos",
-                "Ingrese valores numéricos válidos."
-            )
-
-    botones_formulario(
-        VERDE_CLARO,
-        calcular
-    )
+    selector.bind("<<ComboboxSelected>>", cargar_campos)
+    cargar_campos()
+    botones_formulario(VERDE_CLARO, calcular)
 
 
 def mostrar_interes_compuesto():
@@ -1201,58 +1392,127 @@ def mostrar_gradiente_aritmetico():
 
 def mostrar_gradiente_geometrico():
     actualizar_navegacion("Gradiente geométrico")
-    entradas = crear_formulario(
+    limpiar()
+    titulo_pagina(
         "Gradiente Geométrico",
-        "Cálculo del valor presente de una serie con crecimiento porcentual.",
-        VINO,
-        [
-            ("pago", "Pago inicial"),
-            ("tasa", "Tasa de interés (%)"),
-            ("crecimiento", "Crecimiento (%)"),
-            ("periodos", "Número de períodos")
-        ]
+        "Analice series de pagos que crecen por una razón porcentual constante."
     )
 
-    resultado = panel_resultado(VINO)
+    operaciones = {
+        "P = K[((1+g)^n - (1+i)^n) / ((g-i)(1+i)^n)]": {
+            "campos": [("pago", "Pago inicial K"), ("tasa", "Tasa de interés i (%)"), ("crecimiento", "Razón geométrica g (%)"), ("periodos", "Número de períodos n")],
+            "calcular": lambda v: ("Valor presente (P)", calcular_presente_gradiente_geometrico(v["pago"], v["tasa"], v["crecimiento"], v["periodos"]), v),
+        },
+        "P = Kn / (1+i)  si g = i": {
+            "campos": [("pago", "Pago inicial K"), ("tasa", "Tasa de interés i (%)"), ("periodos", "Número de períodos n")],
+            "calcular": lambda v: ("Valor presente (P)", calcular_presente_gradiente_geometrico_igual(v["pago"], v["tasa"], v["periodos"]), v),
+        },
+        "F = K[((1+g)^n - (1+i)^n) / (g-i)]": {
+            "campos": [("pago", "Pago inicial K"), ("tasa", "Tasa de interés i (%)"), ("crecimiento", "Razón geométrica g (%)"), ("periodos", "Número de períodos n")],
+            "calcular": lambda v: ("Valor futuro (F)", calcular_futuro_gradiente_geometrico(v["pago"], v["tasa"], v["crecimiento"], v["periodos"]), v),
+        },
+        "F = Kn(1+i)^(n-1)  si g = i": {
+            "campos": [("pago", "Pago inicial K"), ("tasa", "Tasa de interés i (%)"), ("periodos", "Número de períodos n")],
+            "calcular": lambda v: ("Valor futuro (F)", calcular_futuro_gradiente_geometrico_igual(v["pago"], v["tasa"], v["periodos"]), v),
+        },
+    }
+    descripciones = {
+        "P = K[((1+g)^n - (1+i)^n) / ((g-i)(1+i)^n)]": "Se usa para encontrar el valor presente de pagos que crecen por una razón g cuando g e i son diferentes.",
+        "P = Kn / (1+i)  si g = i": "Se usa para encontrar el valor presente cuando los pagos crecen exactamente al mismo ritmo que la tasa de interés.",
+        "F = K[((1+g)^n - (1+i)^n) / (g-i)]": "Se usa para encontrar el valor futuro acumulado de un gradiente geométrico cuando g e i son diferentes.",
+        "F = Kn(1+i)^(n-1)  si g = i": "Se usa para encontrar el valor futuro cuando el crecimiento de los pagos coincide con la tasa de interés.",
+    }
+
+    tarjeta = tk.Frame(contenido, bg=BLANCO, highlightthickness=1, highlightbackground=BORDE)
+    tarjeta.pack(fill="x", padx=42, pady=20)
+    tk.Frame(tarjeta, bg=VINO, height=8).pack(fill="x")
+    cabecera = tk.Frame(tarjeta, bg=VERDE)
+    cabecera.pack(fill="x", padx=20, pady=(18, 0))
+    tk.Label(cabecera, text="GRADIENTE GEOMÉTRICO", font=("Segoe UI", 8, "bold"), bg=DORADO, fg=BLANCO, padx=10, pady=5).pack(side="left", padx=(14, 12), pady=12)
+    tk.Label(cabecera, text="Laboratorio de gradientes", font=("Segoe UI", 13, "bold"), bg=VERDE, fg=BLANCO).pack(side="left", pady=12)
+    guia = tk.Frame(tarjeta, bg="#F4F8F6")
+    guia.pack(fill="x", padx=30, pady=(16, 4))
+    tk.Label(
+        guia,
+        text="CÓMO ELEGIR",
+        font=("Segoe UI", 8, "bold"),
+        bg="#F4F8F6",
+        fg=VINO,
+    ).pack(anchor="w", padx=14, pady=(11, 7))
+    pasos = tk.Frame(guia, bg="#F4F8F6")
+    pasos.pack(fill="x", padx=10, pady=(0, 11))
+    for columna, numero, titulo, detalle in (
+        (0, "01", "Resultado", "P = hoy  |  F = final"),
+        (1, "02", "Relación de tasas", "g = i  |  g != i"),
+    ):
+        paso = tk.Frame(pasos, bg=BLANCO, highlightthickness=1, highlightbackground=BORDE)
+        paso.grid(row=0, column=columna, sticky="ew", padx=(0, 8 if columna == 0 else 0))
+        pasos.columnconfigure(columna, weight=1)
+        tk.Label(paso, text=numero, font=("Segoe UI", 8, "bold"), bg=DORADO, fg=BLANCO, padx=7, pady=4).pack(side="left", padx=10, pady=8)
+        texto_paso = tk.Frame(paso, bg=BLANCO)
+        texto_paso.pack(side="left", anchor="w", pady=6)
+        tk.Label(texto_paso, text=titulo, font=("Segoe UI", 9, "bold"), bg=BLANCO, fg=NEGRO).pack(anchor="w")
+        tk.Label(texto_paso, text=detalle, font=("Segoe UI", 8), bg=BLANCO, fg=GRIS).pack(anchor="w")
+    tk.Label(tarjeta, text="ELIJA LA FÓRMULA", font=("Segoe UI", 9, "bold"), bg=BLANCO, fg=GRIS).pack(anchor="w", padx=30, pady=(22, 4))
+    seleccion = tk.StringVar(value=next(iter(operaciones)))
+    selector = ttk.Combobox(tarjeta, textvariable=seleccion, values=list(operaciones), state="readonly", font=("Segoe UI", 10))
+    selector.pack(fill="x", padx=30, ipady=2)
+    detalle = tk.Frame(tarjeta, bg="#EAF6F2")
+    detalle.pack(fill="x", padx=30, pady=(14, 4))
+    formula_activa = tk.Label(detalle, text="", font=("Segoe UI", 11, "bold"), bg="#EAF6F2", fg=VINO)
+    formula_activa.pack(anchor="w", padx=14, pady=(10, 2))
+    tk.Label(
+        detalle,
+        text="SE USA PARA",
+        font=("Segoe UI", 8, "bold"),
+        bg="#EAF6F2",
+        fg=VINO,
+    ).pack(anchor="w", padx=14, pady=(4, 0))
+    descripcion = tk.Label(detalle, text="", font=("Segoe UI", 9), bg="#EAF6F2", fg=GRIS, wraplength=900, justify="left")
+    descripcion.pack(anchor="w", padx=14, pady=(0, 10))
+    campos_frame = tk.Frame(tarjeta, bg=BLANCO)
+    campos_frame.pack(fill="x", padx=30, pady=12)
+    entradas = {}
+    resultado = tk.Label(tarjeta, text="Complete los datos y presione CALCULAR.", font=("Segoe UI", 12, "bold"), bg=BLANCO, fg=VINO, justify="left")
+    resultado.pack(anchor="w", padx=30, pady=(4, 22))
+
+    def cargar_campos(_evento=None):
+        for widget in campos_frame.winfo_children():
+            widget.destroy()
+        entradas.clear()
+        formula_activa.config(text=seleccion.get())
+        descripcion.config(text=descripciones[seleccion.get()])
+        for indice, (nombre, etiqueta) in enumerate(operaciones[seleccion.get()]["campos"]):
+            bloque = tk.Frame(campos_frame, bg=BLANCO)
+            bloque.grid(row=indice // 2, column=indice % 2, sticky="ew", padx=8, pady=6)
+            campos_frame.columnconfigure(indice % 2, weight=1)
+            tk.Label(bloque, text=etiqueta, font=("Segoe UI", 10, "bold"), bg=BLANCO, fg=NEGRO).pack(anchor="w", pady=(0, 5))
+            entrada = tk.Entry(bloque, font=("Segoe UI", 11), bg=CAMPO, fg=NEGRO, insertbackground=VINO, relief="flat", bd=0)
+            entrada.pack(fill="x", padx=12, pady=8)
+            entradas[nombre] = entrada
 
     def calcular():
         try:
-            pago = leer_numero(entradas["pago"])
-            tasa = leer_numero(entradas["tasa"]) / 100
-            crecimiento = leer_numero(entradas["crecimiento"]) / 100
-            periodos = int(entradas["periodos"].get())
-
-            if (
-                pago <= 0
-                or tasa < 0
-                or crecimiento < 0
-                or periodos <= 0
-            ):
-                raise ValueError
-
+            valores = {nombre: leer_numero(entrada) for nombre, entrada in entradas.items()}
+            for nombre in ("tasa", "crecimiento"):
+                if nombre in valores:
+                    valores[nombre] /= 100
+            valores["periodos"] = int(valores["periodos"])
+            nombre_resultado, valor, datos = operaciones[seleccion.get()]["calcular"](valores)
+            resultado.config(text=f"{nombre_resultado}: ${valor:,.2f}")
             presente, flujos = calcular_gradiente_geometrico(
-                pago,
-                tasa,
-                crecimiento,
-                periodos
+                datos["pago"],
+                datos["tasa"],
+                datos.get("crecimiento", datos["tasa"]),
+                datos["periodos"],
             )
-
-            fig = grafica_gradiente_geometrico(
-                flujos,
-                presente
-            )
-            mostrar_grafica(fig)
-
+            mostrar_grafica(grafica_gradiente_geometrico(flujos, presente))
         except (ValueError, ZeroDivisionError):
-            messagebox.showerror(
-                "Datos inválidos",
-                "Ingrese valores numéricos válidos."
-            )
+            messagebox.showerror("Datos inválidos", "Ingrese valores numéricos válidos.")
 
-    botones_formulario(
-        VINO,
-        calcular
-    )
+    selector.bind("<<ComboboxSelected>>", cargar_campos)
+    cargar_campos()
+    botones_formulario(VINO, calcular)
 
 
 if __name__ == "__main__":
