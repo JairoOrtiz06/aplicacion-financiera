@@ -7,6 +7,8 @@ from modulos.interes_simple import calcular_interes_simple
 from modulos.interes_compuesto import calcular_futuro
 from modulos.gradiente_aritmetico import calcular_presente_gradiente
 from modulos.gradiente_geometrico import calcular_gradiente_geometrico
+from interfaz.interes_compuesto_ui import mostrar_interes_compuesto_ui
+from interfaz.interes_compuesto_ui import mostrar_interes_compuesto_ui
 
 from graficas.lineas_tiempo import (
     grafica_interes_simple,
@@ -1134,61 +1136,8 @@ def mostrar_interes_simple():
 
 def mostrar_interes_compuesto():
     actualizar_navegacion("Interés compuesto")
-    entradas = crear_formulario(
-        "Interés Compuesto",
-        "Cálculo del crecimiento de un capital mediante capitalización.",
-        TERRACOTA,
-        [
-            ("capital", "Capital"),
-            ("tasa", "Tasa de interés (%)"),
-            ("periodos", "Número de períodos")
-        ]
-    )
-
-    resultado = panel_resultado(TERRACOTA)
-
-    def calcular():
-        try:
-            capital = leer_numero(entradas["capital"])
-            tasa = leer_numero(entradas["tasa"]) / 100
-            periodos = int(entradas["periodos"].get())
-
-            if capital <= 0 or tasa < 0 or periodos <= 0:
-                raise ValueError
-
-            futuro = calcular_futuro(
-                capital,
-                tasa,
-                periodos
-            )
-
-            interes = futuro - capital
-
-            resultado.config(
-                text=(
-                    f"Interés generado: ${interes:,.2f}\n"
-                    f"Valor futuro: ${futuro:,.2f}"
-                )
-            )
-
-            fig = grafica_interes_compuesto(
-                capital,
-                futuro,
-                periodos
-            )
-            mostrar_grafica(fig)
-
-        except (ValueError, ZeroDivisionError):
-            messagebox.showerror(
-                "Datos inválidos",
-                "Ingrese valores numéricos válidos."
-            )
-
-    botones_formulario(
-        TERRACOTA,
-        calcular
-    )
-
+    limpiar()
+    mostrar_interes_compuesto_ui(contenido)
 
 def mostrar_gradiente_aritmetico():
     actualizar_navegacion("Gradiente aritmético")
