@@ -3,22 +3,16 @@ from tkinter import messagebox, ttk
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from graficas.lineas_tiempo import (
-    grafica_anualidad,
-    grafica_interes_compuesto,
-)
-from modulos.interes_compuesto import (
-    calcular_futuro,
-    calcular_futuro_anualidad,
-    calcular_pago_desde_futuro,
-    calcular_pago_desde_presente,
-    calcular_presente,
-    calcular_presente_anualidad,
+from graficas.lineas_tiempo import grafica_gradiente_aritmetico
+from modulos.gradiente_aritmetico import (
+    calcular_futuro_gradiente,
+    calcular_pago_uniforme_gradiente,
+    calcular_presente_gradiente,
 )
 from utilidades.validaciones import (
+    validar_gradiente,
     validar_monto,
     validar_periodos,
-    validar_tasa,
     validar_tasa_anualidad,
 )
 
@@ -26,7 +20,7 @@ from utilidades.validaciones import (
 FONDO = "#F3F7F5"
 BLANCO = "#FFFFFF"
 VERDE = "#0B5D4B"
-TERRACOTA = "#2E7D5B"
+DORADO = "#A67C18"
 VINO = "#244F45"
 NEGRO = "#173A31"
 GRIS = "#60766E"
@@ -35,87 +29,44 @@ CAMPO = "#F8FBF9"
 
 
 OPERACIONES = {
-    "Valor futuro (F)": {
-        "descripcion": "Calcula el monto acumulado a partir de un capital presente.",
+    "Valor presente del gradiente (P)": {
+        "descripcion": "Calcula el valor presente equivalente de un gradiente aritmetico vencido.",
         "campos": (
-            ("capital", "Capital presente (P)"),
+            ("pago", "Pago inicial (K)"),
+            ("gradiente", "Gradiente aritmetico (G)"),
             ("tasa", "Tasa de interes (%)"),
             ("periodos", "Numero de periodos (n)"),
         ),
-        "funcion": calcular_futuro,
-        "argumentos": ("capital", "tasa", "periodos"),
-        "resultado": "Valor futuro",
-        "tipo_tasa": "compuesto",
-        "tipo_grafica": "capital_futuro",
-    },
-    "Valor presente (P)": {
-        "descripcion": "Calcula el capital actual equivalente a un valor futuro.",
-        "campos": (
-            ("futuro", "Valor futuro (F)"),
-            ("tasa", "Tasa de interes (%)"),
-            ("periodos", "Numero de periodos (n)"),
-        ),
-        "funcion": calcular_presente,
-        "argumentos": ("futuro", "tasa", "periodos"),
+        "funcion": calcular_presente_gradiente,
+        "argumentos": ("pago", "gradiente", "tasa", "periodos"),
         "resultado": "Valor presente",
-        "tipo_tasa": "compuesto",
-        "tipo_grafica": "capital_futuro",
-    },
-    "Presente de anualidad (P/A)": {
-        "descripcion": "Calcula el valor presente de una serie uniforme de pagos.",
-        "campos": (
-            ("pago", "Pago periodico (A)"),
-            ("tasa", "Tasa de interes (%)"),
-            ("periodos", "Numero de periodos (n)"),
-        ),
-        "funcion": calcular_presente_anualidad,
-        "argumentos": ("pago", "tasa", "periodos"),
-        "resultado": "Valor presente de la anualidad",
-        "tipo_tasa": "anualidad",
-        "tipo_grafica": "anualidad",
         "etiqueta_grafica": "VP equivalente",
     },
-    "Futuro de anualidad (F/A)": {
-        "descripcion": "Calcula el valor futuro acumulado de una serie uniforme.",
+    "Pago uniforme equivalente (R)": {
+        "descripcion": "Calcula el pago uniforme equivalente de un gradiente aritmetico vencido.",
         "campos": (
-            ("pago", "Pago periodico (A)"),
+            ("pago", "Pago inicial (K)"),
+            ("gradiente", "Gradiente aritmetico (G)"),
             ("tasa", "Tasa de interes (%)"),
             ("periodos", "Numero de periodos (n)"),
         ),
-        "funcion": calcular_futuro_anualidad,
-        "argumentos": ("pago", "tasa", "periodos"),
-        "resultado": "Valor futuro de la anualidad",
-        "tipo_tasa": "anualidad",
-        "tipo_grafica": "anualidad",
+        "funcion": calcular_pago_uniforme_gradiente,
+        "argumentos": ("pago", "gradiente", "tasa", "periodos"),
+        "resultado": "Pago uniforme equivalente",
+        "etiqueta_grafica": "R equivalente",
+    },
+    "Valor futuro del gradiente (F)": {
+        "descripcion": "Calcula el valor futuro acumulado de un gradiente aritmetico vencido.",
+        "campos": (
+            ("pago", "Pago inicial (K)"),
+            ("gradiente", "Gradiente aritmetico (G)"),
+            ("tasa", "Tasa de interes (%)"),
+            ("periodos", "Numero de periodos (n)"),
+        ),
+        "funcion": calcular_futuro_gradiente,
+        "argumentos": ("pago", "gradiente", "tasa", "periodos"),
+        "resultado": "Valor futuro",
         "etiqueta_grafica": "VF equivalente",
-    },
-    "Pago desde futuro (A/F)": {
-        "descripcion": "Calcula el pago periodico necesario para alcanzar un monto futuro.",
-        "campos": (
-            ("futuro", "Valor futuro (F)"),
-            ("tasa", "Tasa de interes (%)"),
-            ("periodos", "Numero de periodos (n)"),
-        ),
-        "funcion": calcular_pago_desde_futuro,
-        "argumentos": ("futuro", "tasa", "periodos"),
-        "resultado": "Pago periodico",
-        "tipo_tasa": "anualidad",
-        "tipo_grafica": "anualidad_pago",
-        "etiqueta_grafica": "VF objetivo",
-    },
-    "Pago desde presente (A/P)": {
-        "descripcion": "Calcula el pago periodico equivalente a un capital presente.",
-        "campos": (
-            ("presente", "Valor presente (P)"),
-            ("tasa", "Tasa de interes (%)"),
-            ("periodos", "Numero de periodos (n)"),
-        ),
-        "funcion": calcular_pago_desde_presente,
-        "argumentos": ("presente", "tasa", "periodos"),
-        "resultado": "Pago periodico",
-        "tipo_tasa": "anualidad",
-        "tipo_grafica": "anualidad_pago",
-        "etiqueta_grafica": "VP origen",
     },
 }
 
@@ -151,56 +102,24 @@ def crear_caja_entrada(parent, color):
         relief="flat",
         bd=0,
     )
-
-    def validar_tecla(texto):
-        if texto == "":
-            return True
-
-        texto = texto.replace(",", ".")
-
-        if texto.count(".") > 1:
-            return False
-
-        try:
-            float(texto)
-            return True
-        except ValueError:
-            return False
-
-    validar_cmd = entrada.register(validar_tecla)
-
-    entrada.config(
-        validate="key",
-        validatecommand=(validar_cmd, "%P")
-    )
-
     entrada.pack(fill="x", padx=14, pady=9)
-
     entrada.bind(
         "<FocusIn>",
-        lambda _evento: caja.config(
-            highlightbackground=color,
-            highlightthickness=2
-        ),
+        lambda _evento: caja.config(highlightbackground=color, highlightthickness=2),
     )
-
     entrada.bind(
         "<FocusOut>",
-        lambda _evento: caja.config(
-            highlightbackground=BORDE,
-            highlightthickness=1
-        ),
+        lambda _evento: caja.config(highlightbackground=BORDE, highlightthickness=1),
     )
 
     return entrada
 
 
-def mostrar_interes_compuesto_ui(contenido):
-
+def mostrar_gradiente_aritmetico_ui(contenido):
     estilo = ttk.Style(contenido)
     estilo.theme_use("clam")
     estilo.configure(
-        "Compuesto.TCombobox",
+        "GradienteAritmetico.TCombobox",
         fieldbackground=CAMPO,
         background=CAMPO,
         foreground=NEGRO,
@@ -211,11 +130,11 @@ def mostrar_interes_compuesto_ui(contenido):
         padding=8,
     )
     estilo.map(
-        "Compuesto.TCombobox",
+        "GradienteAritmetico.TCombobox",
         fieldbackground=[("readonly", CAMPO)],
         selectbackground=[("readonly", CAMPO)],
         selectforeground=[("readonly", NEGRO)],
-        bordercolor=[("focus", TERRACOTA)],
+        bordercolor=[("focus", DORADO)],
     )
 
     encabezado = tk.Frame(contenido, bg=VERDE, height=92)
@@ -224,7 +143,7 @@ def mostrar_interes_compuesto_ui(contenido):
 
     tk.Label(
         encabezado,
-        text="INTERES COMPUESTO",
+        text="GRADIENTE ARITMETICO",
         font=("Segoe UI", 18, "bold"),
         bg=VERDE,
         fg=BLANCO,
@@ -232,7 +151,7 @@ def mostrar_interes_compuesto_ui(contenido):
 
     tk.Label(
         encabezado,
-        text="Capitalizacion, anualidades y pagos equivalentes",
+        text="Series con variacion constante por periodo",
         font=("Segoe UI", 9),
         bg=VERDE,
         fg="#CBE7DD",
@@ -249,7 +168,7 @@ def mostrar_interes_compuesto_ui(contenido):
     )
     formulario.pack(fill="both", expand=True)
 
-    tk.Frame(formulario, bg=TERRACOTA, height=8).pack(fill="x")
+    tk.Frame(formulario, bg=DORADO, height=8).pack(fill="x")
 
     tk.Label(
         formulario,
@@ -267,7 +186,7 @@ def mostrar_interes_compuesto_ui(contenido):
         values=list(OPERACIONES.keys()),
         state="readonly",
         font=("Segoe UI", 10),
-        style="Compuesto.TCombobox",
+        style="GradienteAritmetico.TCombobox",
     )
     selector.pack(fill="x", padx=28)
 
@@ -282,8 +201,7 @@ def mostrar_interes_compuesto_ui(contenido):
     )
     descripcion.pack(anchor="w", padx=28, pady=(10, 10))
 
-    separador = tk.Frame(formulario, bg=BORDE, height=1)
-    separador.pack(fill="x", padx=28, pady=(0, 12))
+    tk.Frame(formulario, bg=BORDE, height=1).pack(fill="x", padx=28, pady=(0, 12))
 
     campos = tk.Frame(formulario, bg=BLANCO)
     campos.pack(fill="x", padx=28)
@@ -295,7 +213,7 @@ def mostrar_interes_compuesto_ui(contenido):
         text="Complete los datos y presione CALCULAR.",
         font=("Segoe UI", 12, "bold"),
         bg=BLANCO,
-        fg=TERRACOTA,
+        fg=DORADO,
         justify="left",
         wraplength=500,
     )
@@ -357,7 +275,7 @@ def mostrar_interes_compuesto_ui(contenido):
                 fg=NEGRO,
             ).pack(anchor="w", pady=(0, 6))
 
-            entradas[nombre] = crear_caja_entrada(bloque, TERRACOTA)
+            entradas[nombre] = crear_caja_entrada(bloque, DORADO)
 
         primera_entrada = next(iter(entradas.values()), None)
         if primera_entrada is not None:
@@ -376,58 +294,30 @@ def mostrar_interes_compuesto_ui(contenido):
 
         return valores
 
-    def validar_valores(datos_operacion, valores):
-        for nombre, valor in valores.items():
-            if nombre in ("capital", "futuro", "presente", "pago"):
-                validar_monto(valor)
-            elif nombre == "periodos":
-                validar_periodos(valor)
-
-        if datos_operacion["tipo_tasa"] == "anualidad":
-            validar_tasa_anualidad(valores["tasa"])
-        else:
-            validar_tasa(valores["tasa"])
-
-    def crear_figura(datos_operacion, valores, valor_resultado):
-        tipo_grafica = datos_operacion["tipo_grafica"]
-        periodos = valores["periodos"]
-
-        if tipo_grafica == "capital_futuro":
-            capital = valores.get("capital", valor_resultado)
-            futuro = valores.get("futuro", valor_resultado)
-            return grafica_interes_compuesto(capital, futuro, periodos)
-
-        if tipo_grafica == "anualidad":
-            return grafica_anualidad(
-                valores["pago"],
-                periodos,
-                valor_resultado,
-                datos_operacion["etiqueta_grafica"],
-                TERRACOTA,
-            )
-
-        pago = valor_resultado
-        equivalente = valores.get("futuro", valores.get("presente"))
-        return grafica_anualidad(
-            pago,
-            periodos,
-            equivalente,
-            datos_operacion["etiqueta_grafica"],
-            TERRACOTA,
-        )
+    def validar_valores(valores):
+        validar_monto(valores["pago"])
+        validar_gradiente(valores["gradiente"])
+        validar_tasa_anualidad(valores["tasa"])
+        validar_periodos(valores["periodos"])
 
     def calcular():
         try:
             datos_operacion = OPERACIONES[operacion.get()]
             valores = valores_para_operacion(datos_operacion)
-            validar_valores(datos_operacion, valores)
+            validar_valores(valores)
             argumentos = [valores[nombre] for nombre in datos_operacion["argumentos"]]
             valor = datos_operacion["funcion"](*argumentos)
 
-            resultado.config(
-                text=f'{datos_operacion["resultado"]}: ${valor:,.2f}'
+            resultado.config(text=f'{datos_operacion["resultado"]}: ${valor:,.2f}')
+            mostrar_grafica(
+                grafica_gradiente_aritmetico(
+                    valores["pago"],
+                    valores["gradiente"],
+                    valores["periodos"],
+                    valor,
+                    datos_operacion["etiqueta_grafica"],
+                )
             )
-            mostrar_grafica(crear_figura(datos_operacion, valores, valor))
         except ValueError as error:
             mensaje = str(error) or "Ingrese valores numericos validos."
             messagebox.showerror("Datos invalidos", mensaje, parent=contenido)
@@ -441,24 +331,23 @@ def mostrar_interes_compuesto_ui(contenido):
     botones = tk.Frame(cuerpo, bg=FONDO)
     botones.pack(fill="x", pady=(16, 0))
 
-    boton_calcular = tk.Button(
+    tk.Button(
         botones,
         text="CALCULAR",
         command=calcular,
         font=("Segoe UI", 10, "bold"),
-        bg=TERRACOTA,
+        bg=DORADO,
         fg=BLANCO,
-        activebackground="#216346",
+        activebackground="#856313",
         activeforeground=BLANCO,
         relief="flat",
         bd=0,
         padx=26,
         pady=11,
         cursor="hand2",
-    )
-    boton_calcular.pack(side="left")
+    ).pack(side="left")
 
-    boton_cerrar = tk.Button(
+    tk.Button(
         botones,
         text="CERRAR",
         command=contenido.destroy,
@@ -472,8 +361,7 @@ def mostrar_interes_compuesto_ui(contenido):
         padx=24,
         pady=11,
         cursor="hand2",
-    )
-    boton_cerrar.pack(side="left", padx=(10, 0))
+    ).pack(side="left", padx=(10, 0))
 
     selector.bind("<<ComboboxSelected>>", mostrar_campos)
     contenido.bind("<Return>", lambda _evento: calcular())
