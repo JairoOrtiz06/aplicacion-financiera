@@ -144,16 +144,64 @@ def grafica_interes_compuesto(capital, valor_futuro, periodos):
     return fig
 
 
-def grafica_gradiente_aritmetico(pago, gradiente, periodos):
+def grafica_anualidad(pago, periodos, valor_equivalente=None, etiqueta_equivalente="Valor equivalente", color="#2E7D5B"):
     fig, ax = plt.subplots(figsize=(12.5, 4.6), facecolor="#F3F7F5")
     _estilo_grafica(ax)
 
     ax.plot([0, periodos], [0, 0], color="#173A31", linewidth=2.2, zorder=2)
     ax.text(0, 0.13, "Hoy", ha="center", va="bottom", fontsize=8, color="#60766E")
+
+    if valor_equivalente is not None:
+        ax.text(
+            0,
+            0.72,
+            f"{etiqueta_equivalente}: ${valor_equivalente:,.2f}",
+            ha="center",
+            va="center",
+            fontsize=8,
+            color=color,
+        )
+
+    for periodo in range(1, periodos + 1):
+        ax.text(periodo, -0.14, f"P{periodo}", ha="center", va="top", fontsize=8, color="#173A31")
+        _flecha_flujo(ax, periodo, -0.52, f"${pago:,.2f}", "PAGO", color, -0.72)
+
+    ax.set_xlim(-0.55, periodos + 0.55)
+    ax.set_ylim(-0.9, 0.9)
+    ax.set_yticks([])
+    ax.set_xticks(range(periodos + 1))
+    ax.set_xlabel("Tiempo", fontsize=9, color="#2B4B45", labelpad=8)
+    ax.set_title("Diagrama de flujo de caja - Anualidad", fontsize=11, color="#173A31", pad=12)
+    ax.text(
+        0.5,
+        0.98,
+        "ConvenciÃ³n: pagos uniformes por perÃ­odo",
+        transform=ax.transAxes,
+        ha="center",
+        va="top",
+        fontsize=8,
+        color="#60766E",
+    )
+
+    fig.tight_layout()
+    return fig
+
+
+def grafica_gradiente_aritmetico(pago, gradiente, periodos, valor_equivalente=None, etiqueta_equivalente="VP equivalente"):
+    fig, ax = plt.subplots(figsize=(12.5, 4.6), facecolor="#F3F7F5")
+    _estilo_grafica(ax)
+
+    ax.plot([0, periodos], [0, 0], color="#173A31", linewidth=2.2, zorder=2)
+    ax.text(0, 0.13, "Hoy", ha="center", va="bottom", fontsize=8, color="#60766E")
+    texto_equivalente = (
+        f"{etiqueta_equivalente}: ${valor_equivalente:,.2f}"
+        if valor_equivalente is not None
+        else "VP equivalente se muestra en el resultado"
+    )
     ax.text(
         0,
         0.72,
-        "VP equivalente se muestra en el resultado",
+        texto_equivalente,
         ha="center",
         va="center",
         fontsize=8,

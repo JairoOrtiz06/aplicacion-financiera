@@ -5,10 +5,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from modulos.interes_simple import calcular_interes_simple
 from modulos.interes_compuesto import calcular_futuro
-from modulos.gradiente_aritmetico import calcular_presente_gradiente
 from modulos.gradiente_geometrico import calcular_gradiente_geometrico
 from interfaz.interes_compuesto_ui import mostrar_interes_compuesto_ui
-from interfaz.interes_compuesto_ui import mostrar_interes_compuesto_ui
+from interfaz.gradiente_aritmetico_ui import mostrar_gradiente_aritmetico_ui
 
 from graficas.lineas_tiempo import (
     grafica_interes_simple,
@@ -1141,62 +1140,10 @@ def mostrar_interes_compuesto():
 
 def mostrar_gradiente_aritmetico():
     actualizar_navegacion("Gradiente aritmético")
-    entradas = crear_formulario(
-        "Gradiente Aritmético",
-        "Cálculo del valor presente de una serie con incremento constante.",
-        DORADO,
-        [
-            ("pago", "Pago inicial"),
-            ("gradiente", "Gradiente"),
-            ("tasa", "Tasa de interés (%)"),
-            ("periodos", "Número de períodos")
-        ]
-    )
-
-    resultado = panel_resultado(DORADO)
-
-    def calcular():
-        try:
-            pago = leer_numero(entradas["pago"])
-            gradiente = leer_numero(entradas["gradiente"])
-            tasa = leer_numero(entradas["tasa"]) / 100
-            periodos = int(entradas["periodos"].get())
-
-            if (
-                pago <= 0
-                or tasa <= 0
-                or periodos <= 0
-            ):
-                raise ValueError
-
-            presente = calcular_presente_gradiente(
-                pago,
-                gradiente,
-                tasa,
-                periodos
-            )
-
-            resultado.config(
-                text=f"Valor presente: ${presente:,.2f}"
-            )
-
-            fig = grafica_gradiente_aritmetico(
-                pago,
-                gradiente,
-                periodos
-            )
-            mostrar_grafica(fig)
-
-        except (ValueError, ZeroDivisionError):
-            messagebox.showerror(
-                "Datos inválidos",
-                "Ingrese valores numéricos válidos."
-            )
-
-    botones_formulario(
-        DORADO,
-        calcular
-    )
+    limpiar()
+    mostrar_gradiente_aritmetico_ui(contenido)
+    return
+    
 
 
 def mostrar_gradiente_geometrico():
