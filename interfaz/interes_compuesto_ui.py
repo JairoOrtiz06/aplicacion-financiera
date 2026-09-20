@@ -26,6 +26,7 @@ from utilidades.validaciones import (
 FONDO = "#F3F7F5"
 BLANCO = "#FFFFFF"
 VERDE = "#0B5D4B"
+DORADO = "#A67C18"
 TERRACOTA = "#2E7D5B"
 VINO = "#244F45"
 NEGRO = "#173A31"
@@ -218,28 +219,13 @@ def mostrar_interes_compuesto_ui(contenido):
         bordercolor=[("focus", TERRACOTA)],
     )
 
-    encabezado = tk.Frame(contenido, bg=VERDE, height=92)
-    encabezado.pack(fill="x")
-    encabezado.pack_propagate(False)
-
-    tk.Label(
-        encabezado,
-        text="INTERES COMPUESTO",
-        font=("Segoe UI", 18, "bold"),
-        bg=VERDE,
-        fg=BLANCO,
-    ).pack(anchor="w", padx=34, pady=(20, 0))
-
-    tk.Label(
-        encabezado,
-        text="Capitalizacion, anualidades y pagos equivalentes",
-        font=("Segoe UI", 9),
-        bg=VERDE,
-        fg="#CBE7DD",
-    ).pack(anchor="w", padx=34, pady=(3, 0))
+    titulo = tk.Frame(contenido, bg=FONDO)
+    titulo.pack(fill="x", padx=42, pady=(28, 4))
+    tk.Label(titulo, text="Interés Compuesto", font=("Segoe UI", 26, "bold"), bg=FONDO, fg=NEGRO).pack(anchor="w")
+    tk.Label(titulo, text="Capitalización, anualidades y pagos equivalentes.", font=("Segoe UI", 10), bg=FONDO, fg=GRIS).pack(anchor="w", pady=(5, 0))
 
     cuerpo = tk.Frame(contenido, bg=FONDO)
-    cuerpo.pack(fill="both", expand=True, padx=34, pady=28)
+    cuerpo.pack(fill="both", expand=True, padx=42, pady=28)
 
     formulario = tk.Frame(
         cuerpo,
@@ -250,10 +236,14 @@ def mostrar_interes_compuesto_ui(contenido):
     formulario.pack(fill="both", expand=True)
 
     tk.Frame(formulario, bg=TERRACOTA, height=8).pack(fill="x")
+    cabecera = tk.Frame(formulario, bg=VERDE)
+    cabecera.pack(fill="x", padx=20, pady=(18, 0))
+    tk.Label(cabecera, text="INTERÉS COMPUESTO", font=("Segoe UI", 9, "bold"), bg=DORADO, fg=BLANCO, padx=10, pady=5).pack(side="left", padx=(14, 12), pady=12)
+    tk.Label(cabecera, text="Laboratorio de fórmulas", font=("Segoe UI", 13, "bold"), bg=VERDE, fg=BLANCO).pack(side="left", pady=12)
 
     tk.Label(
         formulario,
-        text="OPERACION",
+        text="SELECCIONE LA OPERACIÓN",
         font=("Segoe UI", 8, "bold"),
         bg=BLANCO,
         fg=GRIS,
@@ -324,7 +314,7 @@ def mostrar_interes_compuesto_ui(contenido):
 
         tk.Label(
             grafica_panel,
-            text="LINEA DE TIEMPO",
+            text="LÍNEA DE TIEMPO",
             font=("Segoe UI", 9, "bold"),
             bg=BLANCO,
             fg=NEGRO,
